@@ -117,7 +117,10 @@
       // The same test image used by all four variants. Replace with a real
       // generated-image URL from the app (a CloudFront URL) to match production.
       const TEST_IMAGE_URL =
-        "https://d27qr0frn2mdbk.cloudfront.net/users/j3ka5MkfMMZEqZdj052ECF80UEJ3/019fec4d-2b2e-7172-853b-71eb5d1ce25b.jpg";
+        "https://corsproxy.io/?url=" +
+        encodeURIComponent(
+          "https://d27qr0frn2mdbk.cloudfront.net/users/j3ka5MkfMMZEqZdj052ECF80UEJ3/019fec4d-2b2e-7172-853b-71eb5d1ce25b.jpg"
+        );
 
       const preview = document.getElementById("preview");
       const meta = document.getElementById("meta");
