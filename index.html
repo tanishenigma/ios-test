@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iOS Safari Download Extension — Variant Test</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 24px;
+        background: #f5f5f7;
+        color: #1d1d1f;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      p {
+        line-height: 1.5;
+      }
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        margin: 12px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        margin: 8px 0;
+        font-size: 1rem;
+        border: none;
+        border-radius: 10px;
+        background: #0071e3;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:active {
+        opacity: 0.8;
+      }
+      .result {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #555;
+        min-height: 1.2em;
+        word-break: break-all;
+      }
+      .meta {
+        font-size: 0.8rem;
+        color: #888;
+      }
+      img {
+        max-width: 100%;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>iOS Safari Download Extension — Variant Test</h1>
+    <p>
+      Each button downloads the <strong>same test image</strong> via a different
+      variant of the
+      <code>fetch → blob → createObjectURL → &lt;a download&gt; → click()</code>
+      path. Record the saved filename for each.
+    </p>
+
+    <div class="card">
+      <p><strong>Test image:</strong></p>
+      <img id="preview" alt="test image" />
+      <p class="meta" id="meta">Loading…</p>
+    </div>
+
+    <div class="card">
+      <p>
+        <strong>(A) Current code, unmodified</strong> — server's real
+        Content-Type, whatever it is.
+      </p>
+      <button onclick="variantA()">Download A — unmodified</button>
+      <div class="result" id="resultA"></div>
+    </div>
+
+    <div class="card">
+      <p>
+        <strong>(B) Blob re-tagged to correct specific type</strong>
+        (<code>image/png</code>) before createObjectURL.
+      </p>
+      <button onclick="variantB()">Download B — image/png</button>
+      <div class="result" id="resultB"></div>
+    </div>
+
+    <div class="card">
+      <p>
+        <strong
+          >(C) Blob re-tagged to <code>application/octet-stream</code></strong
+        >
+        before createObjectURL.
+      </p>
+      <button onclick="variantC()">Download C — octet-stream</button>
+      <div class="result" id="resultC"></div>
+    </div>
+
+    <div class="card">
+      <p>
+        <strong>(D) <code>a.type</code> attribute set explicitly</strong> (<code
+          >link.type = blob.type</code
+        >) in addition to <code>download</code>.
+      </p>
+      <button onclick="variantD()">Download D — a.type set</button>
+      <div class="result" id="resultD"></div>
+    </div>
+
+    <script>
+      // The same test image used by all four variants. Replace with a real
+      // generated-image URL from the app (a CloudFront URL) to match production.
+      const TEST_IMAGE_URL =
+        "https://d27qr0frn2mdbk.cloudfront.net/users/j3ka5MkfMMZEqZdj052ECF80UEJ3/019fec4d-2b2e-7172-853b-71eb5d1ce25b.jpg";
+
+      const preview = document.getElementById("preview");
+      const meta = document.getElementById("meta");
+      preview.src = TEST_IMAGE_URL;
+      preview.onload = () => {
+        meta.textContent =
+          "Loaded. Now check the Network tab for the real Content-Type header of this request.";
+      };
+
+      function triggerDownload(blob, fileName, setTypeAttr) {
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.style.display = "none";
+        a.href = objectUrl;
+        a.download = fileName;
+        if (setTypeAttr) a.type = blob.type;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(objectUrl);
+        a.remove();
+      }
+
+      async function variantA() {
+        const res = await fetch(TEST_IMAGE_URL);
+        const blob = await res.blob();
+        document.getElementById("resultA").textContent =
+          "blob.type = " + JSON.stringify(blob.type) + " — saved as?";
+        triggerDownload(blob, "variant-a.png", false);
+      }
+
+      async function variantB() {
+        const res = await fetch(TEST_IMAGE_URL);
+        const blob = await res.blob();
+        const typed =
+          blob.type === "image/png"
+            ? blob
+            : new Blob([blob], { type: "image/png" });
+        document.getElementById("resultB").textContent =
+          "blob.type = " + JSON.stringify(typed.type) + " — saved as?";
+        triggerDownload(typed, "variant-b.png", false);
+      }
+
+      async function variantC() {
+        const res = await fetch(TEST_IMAGE_URL);
+        const blob = await res.blob();
+        const typed = new Blob([blob], { type: "application/octet-stream" });
+        document.getElementById("resultC").textContent =
+          "blob.type = " + JSON.stringify(typed.type) + " — saved as?";
+        triggerDownload(typed, "variant-c.png", false);
+      }
+
+      async function variantD() {
+        const res = await fetch(TEST_IMAGE_URL);
+        const blob = await res.blob();
+        document.getElementById("resultD").textContent =
+          "blob.type = " +
+          JSON.stringify(blob.type) +
+          " + a.type set — saved as?";
+        triggerDownload(blob, "variant-d.png", true);
+      }
+    </script>
+  </body>
+</html>
