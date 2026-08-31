@@ -1,0 +1,10 @@
+{
+  "name": "ios-download-variant-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal test page to isolate the iOS Safari download-extension bug across 4 download variants.",
+  "scripts": {
+    "start": "npx serve . -l 8080",
+    "tunnel": "npx localtunnel --port 8080"
+  }
+}
